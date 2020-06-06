@@ -51,21 +51,24 @@ App = {
 
   loadAccount:async () =>{
       App.account = web3.eth.accounts[0]
-      console.log(App.account)
+      //console.log(App.account)
+      //console.log("account loaded")
   },
 
     loadContract: async() => {
+
         const todoList= await $.getJSON('TodoList.json')
         App.contracts.TodoList=TruffleContract(todoList)
         App.contracts.TodoList.setProvider(App.web3Provider)
         console.log(todoList)
         // live contract !!!
         App.todoList= await App.contracts.TodoList.deployed()
+       // console.log("contract loaded")
     },
 
 
     hahah: async () => {
-
+     // console.log("finally loaded")
       // Prevent double render
       if (App.loading) {
         return
@@ -88,45 +91,64 @@ App = {
  * MOST COMPLICATED PART OF THE CODE - INTEGRATING THE BLOCKCHAIN
  */
 
+createMenuItem: async(name) =>{
+  let li = document.createElement('li');
+  li.textContent = name;
+  return li;
+},
+
     renderTasks : async() =>{
       // load tasks from blockchain 
       // render out each tast one by one 
-      
       //fetch the tasks from the blockchain 
       const taskCount = await App.todoList.taskCount()
-      const $tasktemplate= $('.taskTemplate')
+      const $taskTemplate= $('.taskTemplate')
+
       console.log("asdkj")
-      for (let i = 1; i <= taskCount; i++) {
-        const task = await App.todoList.tasks(i)    
-        const taskid=task[0].toNumber()
-        const content=task[1]
-        const Completed=task[2]
+
+
+      for (var i = 1; i <= taskCount; i++) {
+        // Fetch the task data from the blockchain
+        const task = await App.todoList.tasks(i)
+        const taskId = task[0].toNumber()
+        const taskContent = task[1] 
+        const taskCompleted = task[2]
 
         const $newTaskTemplate = $taskTemplate.clone()
         $newTaskTemplate.find('.content').html(taskContent)
         $newTaskTemplate.find('input')
                         .prop('name', taskId)
                         .prop('checked', taskCompleted)
-                        //.on('click', App.toggleCompleted)
+                        .on('click', App.toggleCompleted)
+  
+        // Put the task in the correct list
+        if (taskCompleted) {
+          $('#completedTaskList').append($newTaskTemplate)
+        } else {
+          $('#taskList').append($newTaskTemplate)
+        }
+  
+        // Show the task
+        $newTaskTemplate.show()
       }
-      if (taskCompleted) {
-        $('#completedTaskList').append($newTaskTemplate)
-      } else {
-        $('#taskList').append($newTaskTemplate)
-      }      
-      
-      $newTaskTemplate.show()
+    },
 
+    createTask: async () => {
+      App.setLoading(true)
+      const content = $('#newTask').val()
+      await App.todoList.createTasks(content)
+      window.location.reload()
     },
 
 
-
+    
 /**
  * END
  */
     
 
     setLoading: (boolean) => {
+
       App.loading = boolean
       const loader = $('#loader')
       const content = $('#content')
