@@ -31,5 +31,5 @@ contract("TodoList" , (acc)=>{
         assert.equal(event.content, 'A new task')
         assert.equal(event.completed, false)
       })
-    
+    // test for toggle task not written
 })
